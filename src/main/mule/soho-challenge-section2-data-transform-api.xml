@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="10656178-39af-4e08-943b-3790d323ad57" basePath="/api/v1/challenge" >
+		<http:listener-connection host="0.0.0.0" port="9090" />
+	</http:listener-config>
+	<flow name="soho-challenge-section2-data-transform-apiFlow" doc:id="db3f3d94-a4ef-4921-adf0-6d5ae68dd86d" >
+		<http:listener doc:name="Listener" doc:id="027e4262-1873-455e-ae11-fe5cfa1a1255" config-ref="HTTP_Listener_config" path="/data-transform"/>
+		<ee:transform doc:name="Transform Message" doc:id="7b58eade-be3f-461d-9ac2-2c5b30ab7747">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.5
+output application/json
+---
+{
+  "person": {
+    "name": "John Doe",
+    "age": 30,
+    "address": {
+      "street": "123 Main St",
+      "city": "Springfield",
+      "zip": "12345"
+    },
+    "phones": [
+      {
+        "type": "home",
+        "number": "555-1234"
+      },
+      {
+        "type": "work",
+        "number": "555-5678"
+      }
+    ]
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="60f68dc8-1d0d-4c3d-8ffd-c9f742da30dd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[// CODE BY CHRISTIAN KEVIN GUTIERREZ FLORES - 07-26-2024
+%dw 2.0
+output application/xml
+---
+persona: {
+  nombre: payload.person.name,
+  edad: payload.person.age,
+  direccion: {
+    calle: payload.person.address.street,
+    ciudad: payload.person.address.city,
+    codigoPostal: payload.person.address.zip
+  },
+  telefonos: {
+    telefono: payload.person.phones map ((telefono) -> {
+      tipo: telefono."type",
+      numero: telefono.number
+    })
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
